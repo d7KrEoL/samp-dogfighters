@@ -6,6 +6,7 @@
 	#include "dogfighters/server/menuDialogs/SelectLanguageMenu.pwn"
 	#include "dogfighters/server/menuDialogs/HelpMessageDialog.pwn"
 	#include "dogfighters/server/menuDialogs/ChangePasswordDialog.pwn"
+	#include "dogfighters/server/menuDialogs/DialogInput.pwn"
 	#include "dogfighters/server/serverInfo/serverMain.pwn"
 	#include "dogfighters/server/events/UpdatePlayers.pwn"
 	#include "dogfighters/server/events/UpdateMissiles.pwn"

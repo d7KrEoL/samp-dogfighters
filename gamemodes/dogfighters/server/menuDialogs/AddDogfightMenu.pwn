@@ -17,6 +17,8 @@ forward showAddDFDialog_Score1(playerid, serverPlayers[MODE_MAX_PLAYERS][serverP
 forward showAddDFDialog_Score2(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward showAddDFDialog_YouTube1(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward showAddDFDialog_YouTube2(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
+forward showAddDFDialog_TourName(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
+forward showAddDFDialog_TourStage(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward showAddDFDialog_Referee(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward showAddDFDialog_Summary(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 
@@ -26,6 +28,8 @@ forward processScore1Dialog(playerid, response, inputtext[], serverPlayers[MODE_
 forward processScore2Dialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward processYouTube1Dialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward processYouTube2Dialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
+forward processTourNameDialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
+forward processTourStageDialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward processRefereeDialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 forward processSummaryDialog(playerid, response, listitem, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo]);
 
@@ -97,6 +101,24 @@ public showAddDFDialog_YouTube2(playerid, serverPlayers[MODE_MAX_PLAYERS][server
     else
         ShowPlayerDialog(playerid, DIALOG_ADD_DF_YT2, DIALOG_STYLE_INPUT, "Dogfight - Видео игрок 2", "Введите ссылку на видео от игрока 2 в поле ниже", "Ок", "Назад");
 }
+public showAddDFDialog_TourName(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo])
+{
+    if (isDFPanelBeasy(playerid, serverPlayers, dfInfo))
+        return;
+    if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+        ShowPlayerDialog(playerid, DIALOG_ADD_DF_TNAME, DIALOG_STYLE_INPUT, "Dogfight - Tournament Name", "Enter tournament name or leave is empty if it's default\ndogfighters tournament", "Set", "Back");
+    else
+        ShowPlayerDialog(playerid, DIALOG_ADD_DF_TNAME, DIALOG_STYLE_INPUT, "Dogfight - Название турнира", "Введите название турнира в поле ниже, либо оставьте поле\nпустым, если догфайт сыгран в рамках стандартного турнира", "Ок", "Назад");
+}
+public showAddDFDialog_TourStage(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo])
+{
+    if (isDFPanelBeasy(playerid, serverPlayers, dfInfo))
+        return;
+    if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+        ShowPlayerDialog(playerid, DIALOG_ADD_DF_TSTAGE, DIALOG_STYLE_INPUT, "Dogfight - Tournament Stage", "Enter tournament stage or leave is empty if tournament have no stages\nor if it's a default tournament stage", "Set", "Back");
+    else
+        ShowPlayerDialog(playerid, DIALOG_ADD_DF_TSTAGE, DIALOG_STYLE_INPUT, "Dogfight - Этап турнира", "Введите название турнира в поле ниже, либо оставьте поле\nпустым, если у данного турнира нет стадий/этапов,\nили если это стандартный этап", "Ок", "Назад");
+}
 public showAddDFDialog_Referee(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo])
 {
     if (isDFPanelBeasy(playerid, serverPlayers, dfInfo))
@@ -129,7 +151,9 @@ public showAddDFDialog_Summary(playerid, serverPlayers[MODE_MAX_PLAYERS][serverP
                                         >Score player 2: %d\n\
                                         *Video link 1: %s\n\
                                         *Video link 2: %s\n\
-                                        *Referee: %d\
+                                        *Tournament name: %s\n\
+                                        *Tournament stage: %s\n\
+                                        *Referee: %d\n\
                                         {00FF00}Save dogfight results",
                                                         dfInfo[player1ID],
                                                         dfInfo[player1Score],
@@ -137,6 +161,8 @@ public showAddDFDialog_Summary(playerid, serverPlayers[MODE_MAX_PLAYERS][serverP
                                                         dfInfo[player2Score],
                                                         dfInfo[videoPlayer1],
                                                         dfInfo[videoPlayer2],
+                                                        dfInfo[tournamentName],
+                                                        dfInfo[tournamentStage],
                                                         dfInfo[refereeID]);                        
         ShowPlayerDialog(playerid, DIALOG_ADD_DF_APPROVE, DIALOG_STYLE_LIST, "Dogfight - Summary", message, "Change", "Exit");
     }
@@ -149,6 +175,8 @@ public showAddDFDialog_Summary(playerid, serverPlayers[MODE_MAX_PLAYERS][serverP
                                         {FF9900}>Очки игрока 2:{FFFFFF}%d\n\
                                         {FFFF00}*Ссылка на видео 1:{FFFFFF}%s\n\
                                         {FFFF00}*Ссылка на видео 2:{FFFFFF}%s\n\
+                                        {FFFF00}*Название турнира:{FFFFFF}%s\n\
+                                        {FFFF00}*Этап турнира:{FFFFFF}%s\n\
                                         {FFFF00}*Судья:{FFFFFF}ID:%d\n\
                                         {00FF00}Сохранить результаты догфайта",
                                                         dfInfo[player1ID],
@@ -157,6 +185,8 @@ public showAddDFDialog_Summary(playerid, serverPlayers[MODE_MAX_PLAYERS][serverP
                                                         dfInfo[player2Score],
                                                         dfInfo[videoPlayer1],
                                                         dfInfo[videoPlayer2],
+                                                        dfInfo[tournamentName],
+                                                        dfInfo[tournamentStage],
                                                         dfInfo[refereeID]);
         ShowPlayerDialog(playerid, DIALOG_ADD_DF_APPROVE, DIALOG_STYLE_LIST, "Dogfight - общие сведения", message, "Изменить", "Выход");
     }
@@ -305,7 +335,7 @@ public processScore2Dialog(playerid, response, inputtext[], serverPlayers[MODE_M
 }
 public processYouTube1Dialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo])
 {
-    if (!response)
+    if (!response || !validateDialog(inputtext))
     {
         showAddDFDialog_Summary(playerid, serverPlayers, dfInfo);
         return 1;
@@ -316,12 +346,34 @@ public processYouTube1Dialog(playerid, response, inputtext[], serverPlayers[MODE
 }
 public processYouTube2Dialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo])
 {
-    if (!response)
+    if (!response || !validateDialog(inputtext))
     {
         showAddDFDialog_Summary(playerid, serverPlayers, dfInfo);
         return 1;
     }
     sscanf(inputtext, "s[127]", dfInfo[videoPlayer2]);
+    showAddDFDialog_Summary(playerid, serverPlayers, dfInfo);
+    return 1;
+}
+public processTourNameDialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo])
+{
+    if (!response || !validateDialog(inputtext))
+    {
+        showAddDFDialog_Summary(playerid, serverPlayers, dfInfo);
+        return 1;
+    }
+    sscanf(inputtext, "s[33]", dfInfo[tournamentName]);
+    showAddDFDialog_Summary(playerid, serverPlayers, dfInfo);
+    return 1;
+}
+public processTourStageDialog(playerid, response, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer], dfInfo[DogfightInfo])
+{
+    if (!response || !validateDialog(inputtext))
+    {
+        showAddDFDialog_Summary(playerid, serverPlayers, dfInfo);
+        return 1;
+    }
+    sscanf(inputtext, "s[33]", dfInfo[tournamentStage]);
     showAddDFDialog_Summary(playerid, serverPlayers, dfInfo);
     return 1;
 }
@@ -402,9 +454,17 @@ public processSummaryDialog(playerid, response, listitem, serverPlayers[MODE_MAX
         }
         case 6:
         {
-            showAddDFDialog_Referee(playerid, serverPlayers, dfInfo);
+            showAddDFDialog_TourName(playerid, serverPlayers, dfInfo);
         }
         case 7:
+        {
+            showAddDFDialog_TourStage(playerid, serverPlayers, dfInfo);
+        }
+        case 8:
+        {
+            showAddDFDialog_Referee(playerid, serverPlayers, dfInfo);
+        }
+        case 9:
         {
             if (dfInfo[player1ID] == NOTSET || 
             dfInfo[player2ID] == NOTSET || 
