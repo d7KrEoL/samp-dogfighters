@@ -286,6 +286,10 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 		    return processYouTube1Dialog(playerid, response, inputtext, _serverPlayers, _dogfightInfo);
 		case DIALOG_ADD_DF_YT2:
 		    return processYouTube2Dialog(playerid, response, inputtext, _serverPlayers, _dogfightInfo);
+		case DIALOG_ADD_DF_TNAME:
+		    return processTourNameDialog(playerid, response, inputtext, _serverPlayers, _dogfightInfo);
+		case DIALOG_ADD_DF_TSTAGE:
+		    return processTourStageDialog(playerid, response, inputtext, _serverPlayers, _dogfightInfo);
 		case DIALOG_ADD_DF_REF:
 		    return processRefereeDialog(playerid, response, inputtext, _serverPlayers, _dogfightInfo);
 		case DIALOG_ADD_DF_APPROVE:
@@ -408,6 +412,8 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	dcmd(kick, 4, cmdtext);
 	dcmd(ban, 3, cmdtext);
 	
+	dcmd(changecert, 10, cmdtext);
+	
 	dcmd(help, 4, cmdtext);
 	return 0;
 }
@@ -447,7 +453,7 @@ dcmd_pass(playerid, const params[])
 
 dcmd_savedf(playerid, const params[])
 {
-	return CommandSaveDogfight(playerid, params, _serverPlayers);
+	return CommandSaveDogfight(playerid, params, _serverPlayers, _dogfightInfo);
 }
 
 dcmd_cancelpvp(playerid, const params[])
@@ -619,6 +625,11 @@ dcmd_kick(playerid, const params[])
 dcmd_ban(playerid, const params[])
 {
     return CommandBanAdm(playerid, params, _serverPlayers);
+}
+
+dcmd_changecert(playerid, const params[])
+{
+	return CommandSetCertificate(playerid, params, _serverPlayers);
 }
 
 dcmd_help(playerid, const params[])

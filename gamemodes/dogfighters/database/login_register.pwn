@@ -17,6 +17,8 @@ forward LoginSystem_OnPlayerDeath(playerid, killerid, reason, serverPlayers[MODE
 forward LoginSystem_OnChangePassword(playerid, password[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 forward LoginSystem_GetAccessLevel(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 forward LoginSystem_SetAccessLevel(playerid, level, serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
+forward LoginSystem_RefereeGetCert(playerid, accessCertificate[257], serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
+forward LoginSystem_RefereeSetCert(playerid, accessCertificate[257], serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 
 public OnLoginSystemInit()
 {
@@ -40,6 +42,8 @@ public OnLoginSystemInit()
     yoursql_verify_column(SQL:0, LOGIN_PASS_TBL_USRSCORE, SQL_NUMBER);
 	//verify column "Score" to store user score count
     yoursql_verify_column(SQL:0, LOGIN_PASS_TBL_USRACCESS, SQL_NUMBER);
+	//verify column "Certificate" to store user's referee certificate
+    yoursql_verify_column(SQL:0, LOGIN_PASS_TBL_USRCERT, SQL_STRING);
 
     return 1;
 }
@@ -65,17 +69,17 @@ public LoginSystem_OnPlayerConnect(playerid, serverPlayers[MODE_MAX_PLAYERS][ser
 	if (rowid != SQL_INVALID_ROW)//if registered
 	{
 		if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
-			ShowPlayerDialog(playerid, DIALOG_ID_LOGIN, DIALOG_STYLE_PASSWORD, "User Accounts:", "\t\t\t     You are registered\t\t\n·\t\tplease insert your password to continue:\t\t·", "Login", "Exit");
+			ShowPlayerDialog(playerid, DIALOG_ID_LOGIN, DIALOG_STYLE_PASSWORD, "User Accounts:", "\t\t\t     You are registered\t\t\n.\t\tplease insert your password to continue:\t\t", "Login", "Exit");
 		else
-			ShowPlayerDialog(playerid, DIALOG_ID_LOGIN, DIALOG_STYLE_PASSWORD, "Аккаунт:", "\t\t     Ваш ник зарегистрирован!\t\t\n·\t\tВведите пароль для продолжения:\t\t    ·", "Логин", "Выйти");
+			ShowPlayerDialog(playerid, DIALOG_ID_LOGIN, DIALOG_STYLE_PASSWORD, "Аккаунт:", "\t\t     Ваш ник зарегистрирован!\t\t\n.\t\tВведите пароль для продолжения:\t\t    .", "Ввод", "Выход");
 	    
 	}
 	else//if new user
 	{
 		if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
-			ShowPlayerDialog(playerid, DIALOG_ID_REGISTER, DIALOG_STYLE_PASSWORD, "User Accounts:", "\t\t        You are not recognized on the database\t\t\n·\t\tplease insert a password to sing-in and continue:\t\t·", "Register", "Exit");
+			ShowPlayerDialog(playerid, DIALOG_ID_REGISTER, DIALOG_STYLE_PASSWORD, "User Accounts:", "\t\t        You are not recognized on the database\t\t\n.\t\tplease insert a password to sing-in and continue:\t\t.", "Register", "Exit");
 		else
-			ShowPlayerDialog(playerid, DIALOG_ID_REGISTER, DIALOG_STYLE_PASSWORD, "Аккаунт:", "\t\tВы ещё не зарегистрированы на данном сервере!\n·\t\t\tВведите пароль для регистрации:\t\t\t·", "Ввод", "Выйти");
+			ShowPlayerDialog(playerid, DIALOG_ID_REGISTER, DIALOG_STYLE_PASSWORD, "Аккаунт:", "\t\tВаш ник ещё не зарегистрирован!\n.\t\t\tпридумайте пароль для аккаунта и введите его в поле ниже:\t\t\tпїЅ", "Ввод", "Выход");
 	}
 
 	return 1;
@@ -113,13 +117,13 @@ public LoginSystem_OnDialogResponse(playerid, dialogid, response, listitem, inpu
 					if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 						SendClientMessage(playerid, 0xFF0000FF, "ERROR: Your password must be between 4 - 50 characters.");//give warning message and reshow the dialog
 					else
-						SendClientMessage(playerid, 0xFF0000FF, "Ошибка: Пароль ограничен 4 - 50 символами.");//give warning message and reshow the dialog
+						SendClientMessage(playerid, 0xFF0000FF, "Ошибка: Пароль должен быть длиной 4 - 50 символов.");//give warning message and reshow the dialog
 		            
 					if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 						return ShowPlayerDialog(playerid, 
 												DIALOG_ID_REGISTER, 
 												DIALOG_STYLE_PASSWORD, 
-												"User Accounts:", "\t\t        You are not recognized on the database\t\t\n·\t\tplease insert a password to sing-in and continue:\t\t·", 
+												"User Accounts:", "\t\t        You are not recognized on the database\t\t\nпїЅ\t\tplease insert a password to sing-in and continue:\t\tпїЅ", 
 												"Register", 
 												"Exit");
 					else
@@ -127,8 +131,8 @@ public LoginSystem_OnDialogResponse(playerid, dialogid, response, listitem, inpu
 												DIALOG_ID_REGISTER, 
 												DIALOG_STYLE_PASSWORD, 
 												"Аккаунт:", 
-												"\tВаш ник ещё не зарегистрирован на данном сервере\t\t\n·\t\t   Введите пароль для регистрации:\t\t\t·", 
-												"Регистрация", 
+												"\tВы ещё не зарегистрированы на сервере\t\t\nпїЅ\t\t   придумайте пароль и введите его в поле ниже:\t\t\t.", 
+												"Ввод", 
 												"Выход");
 		        }
 
@@ -150,7 +154,7 @@ public LoginSystem_OnDialogResponse(playerid, dialogid, response, listitem, inpu
 				if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 					SendClientMessage(playerid, 0x00FF00FF, "SUCCESS: You have successfully registered your account in the server.");
 				else
-					SendClientMessage(playerid, 0x00FF00FF, "Ваш ник теперь зарегистрирован на этом сервере.");
+					SendClientMessage(playerid, 0x00FF00FF, "Вы успешно зарегистрировали свой аккаунт.");
 				ServerPlayerSetLoggedIn(playerid, true, serverPlayers);  
 		    }
 		}
@@ -186,20 +190,20 @@ public LoginSystem_OnDialogResponse(playerid, dialogid, response, listitem, inpu
 					if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 						SendClientMessage(playerid, 0xFF0000FF, "ERROR: Incorrect password.");//give warning message and reshow the dialog
 					else
-						SendClientMessage(playerid, 0xFF0000FF, "ОШИБКА: Неверный пароль.");//give warning message and reshow the dialog
+						SendClientMessage(playerid, 0xFF0000FF, "Ошибка: Неверный пароль.");//give warning message and reshow the dialog
 		            
 					if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 						return ShowPlayerDialog(playerid, 
 												DIALOG_ID_LOGIN, DIALOG_STYLE_PASSWORD, 
 												"User Accounts:", 
-												"\t\t\t     You entered wrong password\t\t\n\t\t          please insert your password to continue\n·\t\tor create a new account by changing your nickname:\t\t·", 
+												"\t\t\t     You entered wrong password\t\t\n\t\t          please insert your password to continue\n.\t\tor create a new account by changing your nickname:\t\t.", 
 												"Login", 
 												"Exit");
 					else
 						return ShowPlayerDialog(playerid, 
 												DIALOG_ID_LOGIN, DIALOG_STYLE_PASSWORD, 
 												"Аккаунт:", 
-												"\t\t\t\t   Вы ввели неверный пароль.\t\t\n·\t\tПопробуйте снова, либо создайте новый аккаунт, сменив свой ник.:\t\t   ·", 
+												"\t\t\t\t   Вы ввели неверный пароль.\t\t\n.\t\t.введите свой пароль, или смените ник и создайте новый аккаунт.:\t\t   .", 
 												"Login", 
 												"Exit");
 		            
@@ -208,14 +212,14 @@ public LoginSystem_OnDialogResponse(playerid, dialogid, response, listitem, inpu
 		        if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 					SendClientMessage(playerid, 0x00FF00FF, "SUCCESS: You have successfully logged in your account, enjoy playing!");
 				else
-					SendClientMessage(playerid, 0x00FF00FF, "Вы успешно авторизовались под своим логином. Желаем вам приятной игры!");
+					SendClientMessage(playerid, 0x00FF00FF, "Вы успешно авторизовались на сервере!");
 				new accessLevel = LoginSystem_GetAccessLevel(playerid, serverPlayers);
 				if (accessLevel > 0)
 				{
 					if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 						format(password, sizeof(password), "You have admin rights level: %d", accessLevel);
 					else
-						format(password, sizeof(password), "Ваш уровень админ прав: %d", accessLevel);
+						format(password, sizeof(password), "У вас есть права администратора %d уровня", accessLevel);
 					SendClientMessage(playerid, COLOR_SYSTEM_MAIN, password);
 				}
 				new bankCash = yoursql_get_field_int(SQL:0, LOGIN_PASS_TBL_USRSCORE_SML, rowid);
@@ -271,7 +275,7 @@ public LoginSystem_OnChangePassword(playerid, password[], serverPlayers[MODE_MAX
 		if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 			SendClientMessage(playerid, 0xFF0000FF, "ERROR: Your password must be between 4 - 50 characters.");//give warning message and reshow the dialog
 		else
-			SendClientMessage(playerid, 0xFF0000FF, "Ошибка: Пароль ограничен 4 - 50 символами.");//give warning message and reshow the dialog
+			SendClientMessage(playerid, 0xFF0000FF, "Ошибка: Пароль должен быть 4 - 50 символов в длину.");//give warning message and reshow the dialog
 		return;
 	}
 	new namePlayer[MAX_PLAYER_NAME + 1], SQLRow: rowid;
@@ -290,7 +294,7 @@ public LoginSystem_OnChangePassword(playerid, password[], serverPlayers[MODE_MAX
 	if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 		format(passwordHashed, sizeof(passwordHashed), "[/password]: Password was successfully changed!");
 	else
-		format(passwordHashed, sizeof(passwordHashed), "[/password]: Пароль успешно изменён!");
+		format(passwordHashed, sizeof(passwordHashed), "[/password]: Пароль был успешно изменён!");
 	SendClientMessage(playerid, COLOR_SYSTEM_MAIN, passwordHashed);
 	return;
 }
@@ -327,7 +331,36 @@ public LoginSystem_SetAccessLevel(playerid, level, serverPlayers[MODE_MAX_PLAYER
 	if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
 		format(message, sizeof(message), "Your access (admin) level is now set to %d", level);
 	else
-		format(message, sizeof(message), "Ваш уровень доступа (админа) установлен на %d", level);
+		format(message, sizeof(message), "Уровень ваших админ прав изменён на: %d", level);
+	SendClientMessage(playerid, COLOR_SYSTEM_MAIN, message);
+	return true;
+}
+
+public LoginSystem_RefereeGetCert(playerid, accessCertificate[257], serverPlayers[MODE_MAX_PLAYERS][serverPlayer])
+{
+	format(accessCertificate, sizeof(accessCertificate), "");
+	if (!IsPlayerConnected(playerid) || !serverPlayers[playerid][isLoggedIn])
+		return false;
+	new SQLRow: rowid;
+	rowid = yoursql_get_row(SQL:0, LOGIN_PASS_TBL_USR, "Name = %s", serverPlayers[playerid][name]);
+	if (!rowid)
+	{
+		printf("Cannot change acces level for player %s (%d) - not found in database (%d)", serverPlayers[playerid][name], playerid, int:rowid);
+		return false;
+	}
+	yoursql_get_field(SQL:0, LOGIN_PASS_TBL_USRCERT_SML, rowid, accessCertificate);
+	return true;
+}
+public LoginSystem_RefereeSetCert(playerid, accessCertificate[257], serverPlayers[MODE_MAX_PLAYERS][serverPlayer])
+{
+	if (!IsPlayerConnected(playerid) || !serverPlayers[playerid][isLoggedIn])
+		return false;
+	yoursql_set_field(SQL:0, LOGIN_PASS_TBL_USRCERT_SML, yoursql_get_row(SQL:0, LOGIN_PASS_TBL_USR, "Name = %s", serverPlayers[playerid][name]), accessCertificate);
+	new message[64];
+	if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+		format(message, sizeof(message), "Your referee certificate was successfully changed");
+	else
+		format(message, sizeof(message), "Ваш судейский сертификат был успешно изменён");
 	SendClientMessage(playerid, COLOR_SYSTEM_MAIN, message);
 	return true;
 }

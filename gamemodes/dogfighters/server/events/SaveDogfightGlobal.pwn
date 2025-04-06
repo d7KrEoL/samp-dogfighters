@@ -14,6 +14,8 @@ enum DogfightInfo
     player2Score,
     videoPlayer1[128],
     videoPlayer2[128],
+    tournamentName[33],
+    tournamentStage[33],
     refereeID
 }
 
@@ -31,6 +33,8 @@ public ResetDogfightInfo(dogfightInfo[DogfightInfo])
     dogfightInfo[player2Score] = 0;
     format(dogfightInfo[videoPlayer1], 128, "");
     format(dogfightInfo[videoPlayer2], 128, "");
+    format(dogfightInfo[tournamentName], 33, "");
+    format(dogfightInfo[tournamentStage], 33, "");
 }
 
 public SaveDogfightData(dogfightInfo[DogfightInfo], serverPlayers[MODE_MAX_PLAYERS][serverPlayer])
@@ -54,14 +58,17 @@ public SaveDogfightData(dogfightInfo[DogfightInfo], serverPlayers[MODE_MAX_PLAYE
         #endif
         return;
     }
-    new refName[MAX_PLAYER_NAME + 1];
+    new refereeCertificate[257];
     if (!IsPlayerConnected(dogfightInfo[refereeID]))
-        format(refName, sizeof(refName), "Dogfighters.Svr");
+        format(refereeCertificate, sizeof(refereeCertificate), API_DF_CERTIFICATE);
     else
-        format(refName, sizeof(refName), serverPlayers[dogfightInfo[refereeID]][name]);
+    {
+        LoginSystem_RefereeGetCert(dogfightInfo[refereeID], refereeCertificate, serverPlayers);
+        format(refereeCertificate, sizeof(refereeCertificate), "%s", refereeCertificate);
+    }
 
     #if DEBUG_MODE_SV_DOGFIGHT == true
-    printf("SaveDogfightData ref: %s (%d)", refName, dogfightInfo[refereeID]);
+    printf("SaveDogfightData ref: %s (%d)", refereeCertificate, dogfightInfo[refereeID]);
     #endif
 
     new req[2048];
@@ -75,6 +82,24 @@ public SaveDogfightData(dogfightInfo[DogfightInfo], serverPlayers[MODE_MAX_PLAYE
 
     #if DEBUG_MODE_SV_DOGFIGHT == true
     printf("[73]---->Request: %s", req);
+    printf("namePlayer1=%s\n\
+            namePlayer2=%s\n\
+            scorePlayer1=%d\n\
+            scorePlayer2=%d\n\
+            videoPlayer1=%s\n\
+            videoPlayer2=%s\n\
+            tournamentName=%s\n\
+            tournamentStage=%s\n\
+            referee=%s", 
+            serverPlayers[dogfightInfo[player1ID]][name],
+            serverPlayers[dogfightInfo[player2ID]][name],
+            dogfightInfo[player1Score],
+            dogfightInfo[player2Score],
+            dogfightInfo[videoPlayer1],
+            dogfightInfo[videoPlayer2],
+            dogfightInfo[tournamentName],
+            dogfightInfo[tournamentStage],
+            refereeCertificate);
     #endif
     new RequestsClient:https = RequestsClient(req);
     RequestJSON(https,
@@ -88,7 +113,9 @@ public SaveDogfightData(dogfightInfo[DogfightInfo], serverPlayers[MODE_MAX_PLAYE
             "scorePlayer2", JsonInt(dogfightInfo[player2Score]),
             "videoPlayer1", JsonString(dogfightInfo[videoPlayer1]),
             "videoPlayer2", JsonString(dogfightInfo[videoPlayer2]),
-            "referee", JsonString(refName)
+            "tournamentName", JsonString(dogfightInfo[tournamentName]),
+            "tournamentStage", JsonString(dogfightInfo[tournamentStage]),
+            "referee", JsonString(refereeCertificate)
         )
     );
     
@@ -107,6 +134,8 @@ public SaveDogfightPvpData(winnerID, looserID, serverPlayers[MODE_MAX_PLAYERS][s
     dfInfo[player2Score] = serverPlayers[looserID][pvpscore];
     format(dfInfo[videoPlayer1], 128, "");
     format(dfInfo[videoPlayer2], 128, "");
+    format(dfInfo[tournamentName], 33, "");
+    format(dfInfo[tournamentStage], 33, "");
     SaveDogfightData(dfInfo, serverPlayers);
     new messageEN[100];
     new messageRU[100];
@@ -117,7 +146,7 @@ public SaveDogfightPvpData(winnerID, looserID, serverPlayers[MODE_MAX_PLAYERS][s
                                                                                         dfInfo[player2Score],
                                                                                         dfInfo[player2ID],
                                                                                         serverPlayers[dfInfo[player2ID]][name]);
-    format(messageRU, sizeof(messageRU), "Результаты догфайта сохранены: %s (%d) [%d:%d] (%d) %s",
+    format(messageRU, sizeof(messageRU), "Результаты догфайта автоматически сохранены: %s (%d) [%d:%d] (%d) %s",
                                                                                         serverPlayers[dfInfo[player1ID]][name],
                                                                                         dfInfo[player1ID],
                                                                                         dfInfo[player1Score],

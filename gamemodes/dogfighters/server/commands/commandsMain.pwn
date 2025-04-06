@@ -21,6 +21,7 @@
 #include "dogfighters/server/commands/CommandSpecOff.pwn"
 #include "dogfighters/server/commands/CommandChangePassword.pwn"
 #include "dogfighters/server/commands/CommandSaveDogfight.pwn"
+#include "dogfighters/server/commands/CommandSetCertificate.pwn"
 #include "dogfighters/server/commands/CommandSetLevelAdm.pwn"
 #include "dogfighters/server/commands/CommandKickAdm.pwn"
 #include "dogfighters/server/commands/CommandBanAdm.pwn"
