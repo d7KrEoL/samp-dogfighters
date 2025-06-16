@@ -20,6 +20,7 @@
 #include "dogfighters/server/commands/CommandSpec.pwn"
 #include "dogfighters/server/commands/CommandSpecOff.pwn"
 #include "dogfighters/server/commands/CommandChangePassword.pwn"
+#include "dogfighters/server/commands/CommandChangeName.pwn"
 #include "dogfighters/server/commands/CommandSaveDogfight.pwn"
 #include "dogfighters/server/commands/CommandSetCertificate.pwn"
 #include "dogfighters/server/commands/CommandSetLevelAdm.pwn"

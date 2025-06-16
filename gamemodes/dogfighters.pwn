@@ -5,6 +5,8 @@
 #include <colandreas>   //  For collisions
 #include <Pawn.RakNet>  //  For bulletSync packets
 
+#define RUN_TESTS true
+
 #include "sscanf2.inc"
 
 #include "dogfighters/main.pwn"
@@ -83,6 +85,13 @@ public OnGameModeInit()
     //RegisterServerPlayers(_serverPlayers);
     SetTimer("OnUpdateShort", 100, true);
     SetTimer("OnUpdateLong", 1000, true);
+
+	#if (RUN_TESTS == true)
+		printf("Running tests before start");
+		if (!ChangeDogfighterName("_]rVF[.Ejik_", "_]rVF[.Ejik_"))
+			printf("[!WARNING!]: ChangeDogfighterName test failed. Command /changename may not work well.");
+		printf("All tests ended");
+	#endif
 	return 1;
 }
 
@@ -373,6 +382,9 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	dcmd(password, 8, cmdtext);
 	dcmd(pass, 4, cmdtext);
 	
+	dcmd(changename, 10, cmdtext);
+	dcmd(chname, 6, cmdtext);
+	
 	dcmd(savedf, 6, cmdtext);
 
 	dcmd(cancelpvp, 9, cmdtext);
@@ -449,6 +461,16 @@ dcmd_password(playerid, const params[])
 dcmd_pass(playerid, const params[])
 {
 	return dcmd_password(playerid, params);
+}
+
+dcmd_changename(playerid, const params[])
+{
+	return CommandChangeName(playerid, params, _serverPlayers);
+}
+
+dcmd_chname(playerid, const params[])
+{
+	return dcmd_changename(playerid, params);
 }
 
 dcmd_savedf(playerid, const params[])

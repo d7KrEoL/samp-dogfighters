@@ -15,6 +15,7 @@ forward LoginSystem_OnPlayerDisconnect(playerid, serverPlayers[MODE_MAX_PLAYERS]
 forward LoginSystem_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 forward LoginSystem_OnPlayerDeath(playerid, killerid, reason, serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 forward LoginSystem_OnChangePassword(playerid, password[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
+forward LoginSystem_OnChangeName(playerid, newPlayerName[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 forward LoginSystem_GetAccessLevel(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 forward LoginSystem_SetAccessLevel(playerid, level, serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
 forward LoginSystem_RefereeGetCert(playerid, accessCertificate[257], serverPlayers[MODE_MAX_PLAYERS][serverPlayer]);
@@ -42,6 +43,8 @@ public OnLoginSystemInit()
     yoursql_verify_column(SQL:0, LOGIN_PASS_TBL_USRSCORE, SQL_NUMBER);
 	//verify column "Score" to store user score count
     yoursql_verify_column(SQL:0, LOGIN_PASS_TBL_USRACCESS, SQL_NUMBER);
+	//verify column "nextNameChange" to store user score count
+    yoursql_verify_column(SQL:0, LOGIN_PASS_TBL_NAMECHANGE, SQL_NUMBER);
 	//verify column "Certificate" to store user's referee certificate
     yoursql_verify_column(SQL:0, LOGIN_PASS_TBL_USRCERT, SQL_STRING);
 
@@ -233,6 +236,35 @@ public LoginSystem_OnDialogResponse(playerid, dialogid, response, listitem, inpu
 			if (response)
 				LoginSystem_OnChangePassword(playerid, inputtext, serverPlayers);
 		}
+		case DIALOG_ID_CHANGENAME:
+		{
+			if (!response)
+				return 1;
+			new oldName[MAX_PLAYER_NAME + 1];
+			new message[256];
+			GetPlayerName(playerid, oldName, sizeof(oldName));
+			if (LoginSystem_OnChangeName(playerid, inputtext, serverPlayers))
+			{
+				print("Changing player name in df system was approved");
+				ChangeDogfighterName(oldName, inputtext);
+				if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+					format(message, sizeof(message), "[/changename]: Your nickname has been changed to %s in df system", inputtext);
+				else
+					format(message, sizeof(message), "[/changename]: Ваш ник изменён на %s в системе", inputtext);
+				SendClientMessage(playerid, COLOR_SYSTEM_MAIN, message);
+				printf("Name of player %s (%d) was changed to %s", oldName, playerid, inputtext);
+			}
+			else
+			{
+				SetPlayerName(playerid, oldName);
+				if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+					format(message, sizeof(message), "[/changename]: You cannot change nickname that quick (once per 3 days)");
+				else
+					format(message, sizeof(message), "[/changename]: Нельзя так часто менять ник (не чаще чем раз в 3 дня)");
+				SendClientMessage(playerid, COLOR_SYSTEM_MAIN, message);
+				printf("Player %s (%d) is trying to change name too quick", oldName, playerid);
+			}
+		}
 	}
 
 	return 1;
@@ -297,6 +329,67 @@ public LoginSystem_OnChangePassword(playerid, password[], serverPlayers[MODE_MAX
 		format(passwordHashed, sizeof(passwordHashed), "[/password]: Пароль был успешно изменён!");
 	SendClientMessage(playerid, COLOR_SYSTEM_MAIN, passwordHashed);
 	return;
+}
+
+public LoginSystem_OnChangeName(playerid, newPlayerName[], serverPlayers[MODE_MAX_PLAYERS][serverPlayer])
+{
+	if (!newPlayerName[0], strlen(newPlayerName) < 4 || strlen(newPlayerName) > 20)
+	{
+		if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+			SendClientMessage(playerid, 0xFF0000FF, "ERROR: Your nickname must be between 3 - 20 characters.");//give warning message and reshow the dialog
+		else
+			SendClientMessage(playerid, 0xFF0000FF, "Ошибка: Ник должен быть 3 - 20 символов в длину.");//give warning message and reshow the dialog
+		return false;
+	}
+	new SQLRow: nickRow = yoursql_get_row(SQL:0, LOGIN_PASS_TBL_USR, "Name = %s", newPlayerName);
+	new resultMessage[256];
+	if (nickRow)
+	{
+		printf("Cannot change name for player %s (%d) - user with name %s is already exists in database (%d)", 
+			serverPlayers[playerid][name], 
+			playerid, 
+			newPlayerName, 
+			int:nickRow);
+		if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+			format(resultMessage, sizeof(resultMessage), "[/changename]: Cannot change name - player with that nickname is already exist!");
+		else
+			format(resultMessage, sizeof(resultMessage), "[/changename]: Невозможно сменить ник - игрок с таким ником уже существует!");
+		SendClientMessage(playerid, COLOR_SYSTEM_MAIN, resultMessage);
+		return false;
+	}
+	new namePlayer[MAX_PLAYER_NAME + 1], SQLRow: rowid;
+	GetPlayerName(playerid, namePlayer, MAX_PLAYER_NAME + 1);
+	rowid = yoursql_get_row(SQL:0, LOGIN_PASS_TBL_USR, "Name = %s", namePlayer);
+	if (!rowid)
+	{
+		printf("Cannot change name for player %s (%d) - not found in database (%d)", namePlayer, playerid, int:rowid);
+		return false;
+	}
+	new allowNameChangeDate = yoursql_get_field_int(SQL:0, LOGIN_PASS_TBL_NAMECHANGE_SML, rowid);
+	new currentDate = gettime();
+	if (currentDate < allowNameChangeDate)
+	{
+		printf("Cannot change name for player %s (%d) - player has already changed his nickname (last change: %d, current datetime: %d)", 
+			serverPlayers[playerid][name], 
+			playerid, 
+			allowNameChangeDate, 
+			currentDate);
+		return false;
+	}
+	yoursql_set_field(SQL:0, LOGIN_PASS_TBL_USRNAME_SML, rowid, newPlayerName);//set the nickname
+	yoursql_set_field_int(SQL:0, LOGIN_PASS_TBL_NAMECHANGE_SML, rowid, (currentDate + 259200));//create new name change time
+
+	if (serverPlayers[playerid][language] == PLAYER_LANGUAGE_ENGLISH)
+		format(resultMessage, sizeof(resultMessage), "[/changename]: Nickname was successfully changed on this server!");
+	else
+		format(resultMessage, sizeof(resultMessage), "[/changename]: Ник был успешно изменён на этом сервере!");
+	SendClientMessage(playerid, COLOR_SYSTEM_MAIN, resultMessage);
+	printf("Changing name is approved for player %s (%d) [Time: %d] [Next change: %d]", 
+		serverPlayers[playerid][name], 
+		playerid, 
+		currentDate,
+		currentDate + 259200);
+	return true;
 }
 
 public LoginSystem_GetAccessLevel(playerid, serverPlayers[MODE_MAX_PLAYERS][serverPlayer])
